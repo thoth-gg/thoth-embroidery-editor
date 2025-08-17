@@ -3,7 +3,7 @@ import ProjectPanel from './components/left-panels/ProjectPanel.vue'
 import StepPanel from './components/left-panels/StepPanel.vue'
 import ColorPalletPanel from './components/right-panels/ColorPalletPanel.vue'
 import EditorPanel from './components/left-panels/EditorModePanel.vue'
-import StitchEditor from './components/StitchEditor.vue'
+import StitchEditor from './components/editor/StitchEditor.vue'
 import InspectorPanel from './components/right-panels/InspectorPanel.vue'
 import ProcessPanel from './components/right-panels/ProcessPanel.vue'
 </script>

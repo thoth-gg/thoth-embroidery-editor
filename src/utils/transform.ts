@@ -1,6 +1,6 @@
 import { Boundary, Point, type Path } from '@/models/point'
 
-export function rescalePointsXY(path: Path, dstW: number, dstH: number, boundary?: Boundary): Path {
+export function rescalePathXY(path: Path, dstW: number, dstH: number, boundary?: Boundary): Path {
   if (path.length === 0) return []
 
   // 未指定なら元データから境界を取得

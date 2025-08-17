@@ -2,7 +2,7 @@
 import { Boundary } from '@/models/point'
 import type { Step } from '@/models/step'
 import { useStore } from '@/store/store'
-import { rescalePointsXY } from '@/utils/transform'
+import { rescalePathXY } from '@/utils/transform'
 import { onMounted, ref } from 'vue'
 
 const props = defineProps<{
@@ -19,7 +19,7 @@ onMounted(() => {
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
     ctx.fillStyle = props.step.color
 
-    const normalizedPoints = rescalePointsXY(
+    const normalizedPoints = rescalePathXY(
       props.step.sourcePath,
       canvas.value.width,
       canvas.value.height,

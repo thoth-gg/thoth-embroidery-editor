@@ -8,10 +8,12 @@ const store = useStore()
 
 <template>
   <PanelBase title="エディタモード">
-    <MenuButton @click="store.editor.mode = 'step'" :active="store.editor.mode === 'step'"
+    <MenuButton @click="store.editor.mode.type = 'step'" :active="store.editor.mode.type === 'step'"
       >ステップモード</MenuButton
     >
-    <MenuButton @click="store.editor.mode = 'process'" :active="store.editor.mode === 'process'"
+    <MenuButton
+      @click="store.editor.mode.type = 'process'"
+      :active="store.editor.mode.type === 'process'"
       >プロセスモード</MenuButton
     >
   </PanelBase>

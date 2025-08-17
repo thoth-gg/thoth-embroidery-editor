@@ -14,6 +14,7 @@ export class Point {
 }
 
 export type Path = Point[]
+export type BezierCtrlPoints = Point[]
 
 export class Boundary {
   minX: number
@@ -26,5 +27,25 @@ export class Boundary {
     this.minY = minY
     this.maxX = maxX
     this.maxY = maxY
+  }
+
+  static fromPath(path: Path): Boundary {
+    const xPointList = path.map((point) => point.x)
+    const yPointList = path.map((point) => point.y)
+    return new Boundary(
+      Math.min(...xPointList),
+      Math.min(...yPointList),
+      Math.max(...xPointList),
+      Math.max(...yPointList),
+    )
+  }
+
+  public padding(padding: number) {
+    return new Boundary(
+      this.minX - padding,
+      this.minY - padding,
+      this.maxX + padding,
+      this.maxY + padding,
+    )
   }
 }

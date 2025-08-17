@@ -27,7 +27,7 @@ function click(step: Step) {
       <StrokePreview :step="step" />
       <div class="step-info">
         <p>色: {{ step.color }}</p>
-        <p>処理方法: {{ step.embroideryProcess }}</p>
+        <p>処理方法: {{ step.embroideryProcess.name }}</p>
       </div>
     </div>
   </PanelBase>

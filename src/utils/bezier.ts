@@ -1,6 +1,6 @@
-import { Point, type Path } from '@/models/point'
+import { Point, type BezierCtrlPoints, type Path } from '@/models/point'
 
-export function bezier(controlPoints: Point[], fineness: number) {
+export function bezier(controlPoints: BezierCtrlPoints, fineness: number) {
   if (controlPoints.length < 3) return []
   if (fineness <= 0) return []
 
@@ -8,7 +8,7 @@ export function bezier(controlPoints: Point[], fineness: number) {
   for (let i = 0; i < controlPoints.length - 1; i++)
     lines.push(lineSplit(controlPoints[i], controlPoints[i + 1], fineness))
 
-  const bezierCurvePoints: Point[] = []
+  const bezierCurvePoints: BezierCtrlPoints = []
   bezierCurvePoints.push(controlPoints[0])
   ;[...Array(fineness)].forEach((_, index) => {
     let l = lines.map((e) => e[index])

@@ -6,12 +6,12 @@ import { computed, ref } from 'vue'
 export const useStore = defineStore('store', () => {
   const embroidery = ref<Embroidery | null>(null)
 
-  const posiPath = ref<Path | null>(null)
-
   const editor = ref<Editor>({
-    mode: 'step',
+    mode: EditorMode.Step,
     selectedStepId: null,
   })
+
+  const debugPath = ref<Path | null>(null)
 
   const selectedStep = computed(() => {
     return (
@@ -27,10 +27,45 @@ export const useStore = defineStore('store', () => {
     return new Boundary(0, 0, width, height)
   })
 
-  return { embroidery, editor, selectedStep, stepList, embroideryBoundary, posiPath }
+  return { embroidery, editor, selectedStep, stepList, embroideryBoundary, debugPath }
 })
 
-export type EditorMode = 'step' | 'process' | 'process-set-start-point' | 'process-set-end-point'
+export const EditorMode: { [key: string]: EditorMode } = {
+  Step: {
+    key: 'step',
+    type: 'step',
+    is: (...mode: EditorMode[]) => mode.some((m) => m.key === 'step' && m.type === 'step'),
+  } as const,
+  Process: {
+    key: 'process',
+    type: 'process',
+    is: (...mode: EditorMode[]) => mode.some((m) => m.key === 'process' && m.type === 'process'),
+  } as const,
+  ProcessSetStartPoint: {
+    key: 'process-set-start-point',
+    type: 'process',
+    is: (...mode: EditorMode[]) =>
+      mode.some((m) => m.key === 'process-set-start-point' && m.type === 'process'),
+  } as const,
+  ProcessSetEndPoint: {
+    key: 'process-set-end-point',
+    type: 'process',
+    is: (...mode: EditorMode[]) =>
+      mode.some((m) => m.key === 'process-set-end-point' && m.type === 'process'),
+  } as const,
+  ProcessSetControlPoints: {
+    key: 'process-set-control-points',
+    type: 'process',
+    is: (...mode: EditorMode[]) =>
+      mode.some((m) => m.key === 'process-set-control-points' && m.type === 'process'),
+  } as const,
+} as const
+
+export interface EditorMode {
+  key: string
+  type: string
+  is(...mode: EditorMode[]): boolean
+}
 
 export interface Editor {
   mode: EditorMode
