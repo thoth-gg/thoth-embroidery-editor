@@ -44,10 +44,17 @@ export class Step {
 }
 
 export interface StepSatin {
-  satinStartPointId: string | null
-  satinEndPointId: string | null
+  startPointId: string | null
+  endPointId: string | null
+
+  guidePointPairList: GuidePointPair[]
 }
 
-export interface StepTatami {}
+export interface GuidePointPair {
+  positivePathPointId: string | null
+  negativePathPointId: string | null
+}
 
-export interface StepRunning {}
+export interface StepTatami { }
+
+export interface StepRunning { }

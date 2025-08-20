@@ -1,37 +1,29 @@
 <script setup lang="ts">
-import { Boundary, Point } from '@/models/point'
-import { EditorMode, useStore } from '@/store/store'
-import { bezier } from '@/utils/bezier'
-import { rescalePathXY } from '@/utils/transform'
+import { useStore } from '@/store/store'
 import p5 from 'p5'
-import { onMounted } from 'vue'
-import { drawWhole } from './step-mode'
-import { drawStep } from './process-mode'
+import { onMounted, watch } from 'vue'
 
 const store = useStore()
 
 const sketch = (p: p5) => {
-  p.setup = function () {
+  p.setup = () => {
     p.createCanvas(1080, 800)
   }
 
-  p.draw = function () {
+  p.draw = () => {
     p.background(255)
-    p.noStroke()
-    p.noFill()
 
-    switch (store.editor.mode.type) {
-      case 'step':
-        drawWhole(p)
-        break
-      case 'process':
-        if (!store.selectedStep) {
-          drawWhole(p)
-          break
-        }
-        drawStep(p)
-        break
-    }
+    p.push()
+    store.editorView?.draw(p)
+    p.pop()
+  }
+
+  p.mouseClicked = () => {
+    store.editorView?.mouseClicked(p)
+  }
+
+  p.doubleClicked = () => {
+    store.editorView?.doubleClicked(p)
   }
 }
 

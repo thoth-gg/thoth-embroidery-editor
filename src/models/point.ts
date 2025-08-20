@@ -13,7 +13,41 @@ export class Point {
   }
 }
 
-export type Path = Point[]
+// export type Path = Point[]
+export class Path extends Array<Point> {
+  constructor(...points: Point[]) {
+    super(...points)
+  }
+
+  getPositivePath(startId: string, endId: string): Path {
+    const longPath = [...this, ...this]
+    const positivePath: Point[] = []
+    for (let point of longPath) {
+      if (positivePath.length == 0) {
+        if (point.id === startId) positivePath.push(point)
+        continue
+      }
+      positivePath.push(point)
+      if (point.id === endId) break
+    }
+    return new Path(...positivePath)
+  }
+
+  getNegativePath(startId: string, endId: string): Path {
+    const longPath = [...this, ...this]
+    const negativePath: Point[] = []
+    for (let point of longPath) {
+      if (negativePath.length == 0) {
+        if (point.id === endId) negativePath.push(point)
+        continue
+      }
+      negativePath.push(point)
+      if (point.id === startId) break
+    }
+    return new Path(...negativePath)
+  }
+}
+
 export type BezierCtrlPoints = Point[]
 
 export class Boundary {

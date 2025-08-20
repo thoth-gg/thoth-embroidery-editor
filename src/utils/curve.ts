@@ -1,4 +1,4 @@
-import { Point, type Path } from '@/models/point'
+import { Path, Point } from '@/models/point'
 
 export function calcDistance(path: Path): number {
   return path.reduce(
@@ -23,7 +23,7 @@ export function dividePath(path: Path, n: number): Path {
   const totalLen = cumLens[cumLens.length - 1]
   if (totalLen === 0) throw new Error('全長が 0 です')
 
-  const result: Path = []
+  const result = new Path()
   let segIdx = 1
   const EPS = 1e-9
 

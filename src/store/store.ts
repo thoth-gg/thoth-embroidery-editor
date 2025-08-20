@@ -1,3 +1,5 @@
+import type { EditorView } from '@/components/editor/p5interface'
+import { StepPreview } from '@/components/editor/step-preview'
 import type { Embroidery } from '@/models/embroidery'
 import { Boundary, type Path } from '@/models/point'
 import { defineStore } from 'pinia'
@@ -6,10 +8,13 @@ import { computed, ref } from 'vue'
 export const useStore = defineStore('store', () => {
   const embroidery = ref<Embroidery | null>(null)
 
+  // Deprecated
   const editor = ref<Editor>({
     mode: EditorMode.Step,
     selectedStepId: null,
   })
+
+  const editorView = ref<EditorView>(new StepPreview())
 
   const debugPath = ref<Path | null>(null)
 
@@ -27,7 +32,7 @@ export const useStore = defineStore('store', () => {
     return new Boundary(0, 0, width, height)
   })
 
-  return { embroidery, editor, selectedStep, stepList, embroideryBoundary, debugPath }
+  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath }
 })
 
 export const EditorMode: { [key: string]: EditorMode } = {
@@ -52,6 +57,12 @@ export const EditorMode: { [key: string]: EditorMode } = {
     type: 'process',
     is: (...mode: EditorMode[]) =>
       mode.some((m) => m.key === 'process-set-end-point' && m.type === 'process'),
+  } as const,
+  ProcessSetGuidePointPair: {
+    key: 'process-set-guide-point-pair',
+    type: 'process',
+    is: (...mode: EditorMode[]) =>
+      mode.some((m) => m.key === 'process-set-guide-point-pair' && m.type === 'process'),
   } as const,
   ProcessSetControlPoints: {
     key: 'process-set-control-points',

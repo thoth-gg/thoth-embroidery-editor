@@ -1,7 +1,7 @@
-import { Boundary, Point, type Path } from '@/models/point'
+import { Boundary, Path, Point } from '@/models/point'
 
 export function rescalePathXY(path: Path, dstW: number, dstH: number, boundary?: Boundary): Path {
-  if (path.length === 0) return []
+  if (path.length === 0) return new Path()
 
   // 未指定なら元データから境界を取得
   if (!boundary) {
@@ -25,7 +25,7 @@ export function rescalePathXY(path: Path, dstW: number, dstH: number, boundary?:
   if (srcW === 0 || srcH === 0) {
     const cx = dstW / 2
     const cy = dstH / 2
-    return path.map((p) => new Point(cx, cy, p.id))
+    return new Path(...path.map((p) => new Point(cx, cy, p.id)))
   }
 
   // 一様スケール係数
@@ -35,5 +35,5 @@ export function rescalePathXY(path: Path, dstW: number, dstH: number, boundary?:
   const offsetX = (dstW - srcW * scale) / 2 - boundary.minX * scale
   const offsetY = (dstH - srcH * scale) / 2 - boundary.minY * scale
 
-  return path.map(({ x, y, id }) => new Point(x * scale + offsetX, y * scale + offsetY, id))
+  return new Path(...path.map(({ x, y, id }) => new Point(x * scale + offsetX, y * scale + offsetY, id)))
 }

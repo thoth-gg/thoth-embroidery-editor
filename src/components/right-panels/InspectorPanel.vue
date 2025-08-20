@@ -4,8 +4,11 @@ import PanelBase from '../common/PanelBase.vue'
 import { EditorMode, useStore } from '@/store/store'
 import MenuButton from '../common/MenuButton.vue'
 import { EmbroideryProcess } from '@/models/step'
-import { type Path } from '@/models/point'
+import { Path } from '@/models/point'
 import { calcDistance, dividePath } from '@/utils/curve'
+import type { EditorView } from '../editor/p5interface'
+import { ProcessPreview } from '../editor/process-preview'
+import { ProcessSetStartEndPoint } from '../editor/process-set-start-end-points'
 
 const store = useStore()
 const process = ref<EmbroideryProcess>(EmbroideryProcess.Satin2Points)
@@ -20,40 +23,27 @@ function setEditorMode(editorMode: EditorMode) {
   store.editor.mode = editorMode
 }
 
+function setEditorView(editorView: EditorView) {
+  if (store.editorView.getName() === editorView.getName()) return (store.editorView = new ProcessPreview())
+  store.editorView = editorView
+}
+
 function generateProcess() {
   switch (store.selectedStep?.embroideryProcess.key) {
     case EmbroideryProcess.Satin2Points.key:
       const path = store.selectedStep.sourcePath
-      const startId = store.selectedStep.satin?.satinStartPointId
-      const endId = store.selectedStep.satin?.satinEndPointId
+      const startId = store.selectedStep.satin?.startPointId
+      const endId = store.selectedStep.satin?.endPointId
       if (!startId || !endId) return
 
-      const longPath = [...path, ...path]
-
-      const positivePath = []
-      for (let point of longPath) {
-        if (positivePath.length == 0) {
-          if (point.id === startId) positivePath.push(point)
-          continue
-        }
-        positivePath.push(point)
-        if (point.id === endId) break
-      }
-      const negativePath = []
-      for (let point of longPath) {
-        if (negativePath.length == 0) {
-          if (point.id === endId) negativePath.push(point)
-          continue
-        }
-        negativePath.push(point)
-        if (point.id === startId) break
-      }
+      const positivePath = path.getPositivePath(startId, endId)
+      const negativePath = path.getNegativePath(startId, endId)
 
       const n = Math.ceil(Math.max(calcDistance(positivePath), calcDistance(negativePath)))
       const posiPath = dividePath(positivePath, n + 1)
       const negaPath = dividePath(negativePath, n).reverse()
 
-      const result: Path = []
+      const result = new Path()
       for (let i = 0; i < negaPath.length; i++) {
         result.push(posiPath[i], negaPath[i])
       }
@@ -73,77 +63,53 @@ function generateProcess() {
 
 <template>
   <PanelBase title="インスペクタ">
-    <div v-if="store.editor.mode.type == 'step'"></div>
-    <div v-if="store.editor.mode.type == 'process'">
+    <div v-if="(store.editorView instanceof ProcessSetStartEndPoint) || (store.editorView instanceof ProcessPreview)">
       <label for="process-select">処理方法: </label>
-      <select
-        name="process"
-        id="process-select"
-        :disabled="store.selectedStep == null"
-        @change="
-          (e) => {
-            if (store.selectedStep) {
-              const key = (e.target as HTMLSelectElement).value
-              store.selectedStep.embroideryProcess =
-                EmbroideryProcess[key as keyof typeof EmbroideryProcess]
-            }
+      <select name="process" id="process-select" :disabled="store.selectedStep == null" @change="
+        (e) => {
+          if (store.selectedStep) {
+            const key = (e.target as HTMLSelectElement).value
+            store.selectedStep.embroideryProcess =
+              EmbroideryProcess[key as keyof typeof EmbroideryProcess]
           }
-        "
-        v-bind:value="store.selectedStep?.embroideryProcess.key"
-      >
+        }
+      " v-bind:value="store.selectedStep?.embroideryProcess.key">
         <option v-for="ep in EmbroideryProcess" :key="ep.key" :value="ep.key">
           {{ ep.name }}
-        </option></select
-      ><br />
+        </option>
+      </select><br />
       <div v-if="store.selectedStep?.embroideryProcess.key == EmbroideryProcess.Satin2Points.key">
-        <MenuButton
-          @click="setEditorMode(EditorMode.ProcessSetStartPoint)"
-          :disabled="!store.selectedStep"
-          >開始点指定</MenuButton
-        >:
+        <MenuButton @click="setEditorView(new ProcessSetStartEndPoint())" :disabled="!store.selectedStep">始・終点指定
+        </MenuButton>:
         {{
-          store.editor.mode.is(EditorMode.ProcessSetStartPoint)
+          store.editorView instanceof ProcessSetStartEndPoint
             ? '指定中'
-            : store.selectedStep?.satin?.satinStartPointId
+            : store.selectedStep?.satin?.startPointId
               ? '指定済み'
               : '未指定'
         }}<br />
-        <MenuButton
-          @click="setEditorMode(EditorMode.ProcessSetEndPoint)"
-          :disabled="!store.selectedStep"
-          >終了点指定</MenuButton
-        >:
+        <MenuButton @click="setEditorMode(EditorMode.ProcessSetGuidePointPair)" :disabled="!store.selectedStep">
+          ガイドポイント追加</MenuButton>:
         {{
-          store.editor.mode.is(EditorMode.ProcessSetEndPoint)
-            ? '指定中'
-            : store.selectedStep?.satin?.satinEndPointId
-              ? '指定済み'
-              : '未指定'
+          `${store.selectedStep?.satin?.guidePointPairList.length}個指定済` +
+          (store.editor.mode.is(EditorMode.ProcessSetGuidePointPair) ? `: 指定中` : '')
         }}
       </div>
       <div v-if="store.selectedStep?.embroideryProcess.key == EmbroideryProcess.SatinBezier.key">
-        <MenuButton
-          @click="setEditorMode(EditorMode.ProcessSetControlPoints)"
-          :disabled="!store.selectedStep"
-          >制御点指定</MenuButton
-        >:
+        <MenuButton @click="setEditorMode(EditorMode.ProcessSetControlPoints)" :disabled="!store.selectedStep">制御点指定
+        </MenuButton>:
         {{
           store.editor.mode.is(EditorMode.ProcessSetControlPoints)
             ? '指定中'
-            : store.selectedStep?.satin?.satinStartPointId
+            : store.selectedStep?.satin?.startPointId
               ? '指定済み'
               : '未指定'
         }}
       </div>
-      <MenuButton
-        @click="generateProcess"
-        :disabled="
-          !store.selectedStep ||
-          !store.selectedStep?.satin?.satinStartPointId ||
-          !store.selectedStep?.satin?.satinEndPointId
-        "
-        >プロセス生成</MenuButton
-      >
+      <MenuButton @click="generateProcess" :disabled="!store.selectedStep ||
+        !store.selectedStep?.satin?.startPointId ||
+        !store.selectedStep?.satin?.endPointId
+        ">プロセス生成</MenuButton>
     </div>
   </PanelBase>
 </template>

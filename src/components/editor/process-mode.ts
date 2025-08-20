@@ -1,11 +1,11 @@
-import { Boundary, Point, type Path } from '@/models/point'
+import { Boundary, Path, Point } from '@/models/point'
 import type { Step } from '@/models/step'
 import { EditorMode, useStore } from '@/store/store'
 import { bezier } from '@/utils/bezier'
 import { rescalePathXY } from '@/utils/transform'
 import type p5 from 'p5'
 
-const { Process, ProcessSetStartPoint, ProcessSetEndPoint, ProcessSetControlPoints } = EditorMode
+const { Process, ProcessSetStartPoint, ProcessSetEndPoint, ProcessSetControlPoints, ProcessSetGuidePointPair } = EditorMode
 
 export function drawStep(p: p5) {
   const store = useStore()
@@ -18,28 +18,24 @@ export function drawStep(p: p5) {
   const sourcePath = rescalePathXY(step.sourcePath, p.width, p.height, drawBoundary)
   const debugPath = store.debugPath
     ? rescalePathXY(store.debugPath, p.width, p.height, drawBoundary)
-    : []
+    : new Path()
 
   const color = p.color(step.color)
-  if (store.editor.mode.is(ProcessSetStartPoint, ProcessSetEndPoint, ProcessSetControlPoints)) {
+  if (store.editor.mode.is(ProcessSetStartPoint, ProcessSetEndPoint, ProcessSetControlPoints, ProcessSetGuidePointPair)) {
     color.setAlpha(50)
   }
   p.fill(color)
   p.noStroke()
 
-  p.beginShape()
-  sourcePath.forEach((point) => p.vertex(point.x, point.y))
-  p.endShape()
+  drawPath(p, sourcePath)
 
   p.noFill()
   p.stroke(0, 0, 255)
   p.strokeWeight(1)
-  p.beginShape()
-  debugPath.forEach((point) => p.vertex(point.x, point.y))
-  p.endShape()
+  drawPath(p, debugPath)
 
   if (store.selectedStep.embroideryProcess.key === 'Satin2Points') {
-    drawStartEndPoints(p, store.editor.mode, step, sourcePath)
+    drawPoints(p, store.editor.mode, step, sourcePath)
   }
 
   if (store.editor.mode.is(ProcessSetStartPoint, ProcessSetEndPoint)) {
@@ -50,21 +46,47 @@ export function drawStep(p: p5) {
     drawSetControlPointsUI(p)
   }
 
+  if (store.editor.mode.is(ProcessSetGuidePointPair)) {
+    drawAddGuidePointPairUI(p, sourcePath)
+  }
+
   if (store.selectedStep.embroideryProcess.key === 'SatinBezier') {
     drawBezierCurve(p)
   }
 }
 
-function drawStartEndPoints(p: p5, editorMode: EditorMode, step: any, rescaledPath: any[]) {
+function drawPath(p: p5, path: Path) {
+  p.beginShape()
+  path.forEach((point) => p.vertex(point.x, point.y))
+  p.endShape()
+}
+
+function drawPoints(p: p5, editorMode: EditorMode, step: Step, rescaledPath: any[]) {
   p.strokeWeight(5)
-  rescaledPath.forEach((point) => {
-    if (point.id == step.satin?.satinStartPointId) {
-      p.stroke(255, 0, 0, editorMode === ProcessSetStartPoint ? 100 : 255)
+
+  const drawPoint = (pointId: string | null, color: any, alpha: number) => {
+    const point = rescaledPath.find((p) => p.id === pointId)
+    if (point) {
+      p.stroke(color[0], color[1], color[2], alpha)
       p.point(point.x, point.y)
     }
-    if (point.id == step.satin?.satinEndPointId) {
-      p.stroke(0, 170, 0, editorMode === ProcessSetEndPoint ? 100 : 255)
-      p.point(point.x, point.y)
+    return point
+  }
+
+  step.satin?.startPointId && drawPoint(step.satin.startPointId, [255, 0, 0], editorMode === ProcessSetStartPoint ? 100 : 255)
+  step.satin?.endPointId && drawPoint(step.satin.endPointId, [0, 170, 0], editorMode === ProcessSetEndPoint ? 100 : 255)
+
+  const guidePointPairs = step.satin?.guidePointPairList || []
+  guidePointPairs.forEach((pair) => {
+    p.stroke(0)
+    p.strokeWeight(5)
+    const positivePoint = drawPoint(pair.positivePathPointId, [0, 0, 255], 255)
+    const negativePoint = drawPoint(pair.negativePathPointId, [0, 0, 255], 255)
+
+    if (positivePoint && negativePoint) {
+      p.stroke(0, 0, 255)
+      p.strokeWeight(1)
+      p.line(positivePoint.x, positivePoint.y, negativePoint.x, negativePoint.y)
     }
   })
 }
@@ -75,9 +97,7 @@ function drawBezierCurve(p: p5) {
   p.noFill()
   p.beginShape()
   const b = bezier(controlPoints, 100)
-  b.forEach((point) => {
-    p.vertex(point.x, point.y)
-  })
+  b.forEach((point) => p.vertex(point.x, point.y))
   p.endShape()
 
   p.stroke(0, 0, 255)
@@ -95,19 +115,57 @@ const isMouseInBounds = (x: number, y: number, p: p5) => {
   return 0 <= x && x <= p.width && 0 <= y && y <= p.height
 }
 
+function getNearbyPointOnPath(p: p5, x: number, y: number, path: Path) {
+  return path.reduce(
+    (m, c) => p.dist(c.x, c.y, x, y) < p.dist(m.x, m.y, x, y) ? c : m,
+    new Point(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
+  )
+}
+
+let positivePoint: Point | null = null
+let click = false
+function drawAddGuidePointPairUI(p: p5, sourcePath: Path) {
+  const store = useStore()
+
+  const mouseX = p.mouseX
+  const mouseY = p.mouseY
+
+  const step = store.selectedStep
+  if (!step || !step.satin || !step.satin.startPointId || !step.satin.endPointId) return
+
+
+  if (isMouseInBounds(mouseX, mouseY, p)) {
+    const selectTarget = positivePoint ? sourcePath.getNegativePath(step.satin.startPointId, step.satin.endPointId) : sourcePath.getPositivePath(step.satin.startPointId, step.satin.endPointId)
+    const nearbyPoint = getNearbyPointOnPath(p, mouseX, mouseY, new Path(...selectTarget.slice(1, -1)))
+    p.stroke(0)
+    p.strokeWeight(3)
+    p.point(nearbyPoint.x, nearbyPoint.y)
+
+    if (p.mouseIsPressed) {
+      if (click) return
+      console.log("click")
+      click = true
+      if (!positivePoint) {
+        positivePoint = nearbyPoint
+        return
+      }
+      store.selectedStep.satin?.guidePointPairList.push({
+        positivePathPointId: positivePoint.id,
+        negativePathPointId: nearbyPoint.id,
+      })
+      positivePoint = null
+      store.editor.mode = Process
+    } else {
+      click = false
+    }
+  }
+}
+
 function drawSetStartEndPointUI(p: p5, step: Step, sourcePath: Path) {
   const store = useStore()
 
   const mouseX = p.mouseX
   const mouseY = p.mouseY
-  const min = sourcePath.reduce(
-    (min, current) => {
-      return p.dist(current.x, current.y, mouseX, mouseY) < p.dist(min.x, min.y, mouseX, mouseY)
-        ? current
-        : min
-    },
-    new Point(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
-  )
 
   p.stroke(0)
   p.strokeWeight(1)
@@ -116,33 +174,32 @@ function drawSetStartEndPointUI(p: p5, step: Step, sourcePath: Path) {
   if (isMouseInBounds(mouseX, mouseY, p)) {
     p.stroke(0)
     p.strokeWeight(5)
-    p.point(min.x, min.y)
+
+    const nearbyPoint = getNearbyPointOnPath(p, mouseX, mouseY, sourcePath)
+    p.point(nearbyPoint.x, nearbyPoint.y)
 
     if (p.mouseIsPressed) {
       if (!step.satin) {
-        step.satin = {
-          satinStartPointId: null,
-          satinEndPointId: null,
-        }
+        step.satin = { startPointId: null, endPointId: null, guidePointPairList: [] }
       }
       if (store.editor.mode.is(ProcessSetStartPoint)) {
-        if (step.satin.satinStartPointId === min.id) {
-          step.satin.satinStartPointId = null
-        } else if (step.satin.satinEndPointId === min.id) {
-          step.satin.satinEndPointId = null
-          step.satin.satinStartPointId = min.id
+        if (step.satin.startPointId === nearbyPoint.id) {
+          step.satin.startPointId = null
+        } else if (step.satin.endPointId === nearbyPoint.id) {
+          step.satin.endPointId = null
+          step.satin.startPointId = nearbyPoint.id
         } else {
-          step.satin.satinStartPointId = min.id
+          step.satin.startPointId = nearbyPoint.id
         }
       }
       if (store.editor.mode.is(ProcessSetEndPoint)) {
-        if (step.satin.satinEndPointId === min.id) {
-          step.satin.satinEndPointId = null
-        } else if (step.satin.satinStartPointId === min.id) {
-          step.satin.satinStartPointId = null
-          step.satin.satinEndPointId = min.id
+        if (step.satin.endPointId === nearbyPoint.id) {
+          step.satin.endPointId = null
+        } else if (step.satin.startPointId === nearbyPoint.id) {
+          step.satin.startPointId = null
+          step.satin.endPointId = nearbyPoint.id
         } else {
-          step.satin.satinEndPointId = min.id
+          step.satin.endPointId = nearbyPoint.id
         }
       }
       store.editor.mode = Process
