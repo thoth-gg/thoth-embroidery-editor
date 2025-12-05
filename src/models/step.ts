@@ -4,13 +4,9 @@ import type { Point, Path } from './point'
 let lastId = 0
 
 export const EmbroideryProcess = {
-  Satin2Points: {
-    key: 'Satin2Points',
-    name: '面: サテンステッチ(2点指定)',
-  },
-  SatinBezier: {
-    key: 'SatinBezier',
-    name: '面: サテンステッチ(ベジェ曲線)',
+  SatinControlPoints: {
+    key: 'SatinControlPoints',
+    name: '面: サテンステッチ(制御点指定)',
   },
   Tatami: {
     key: 'Tatami',
@@ -27,7 +23,7 @@ export type EmbroideryProcess = (typeof EmbroideryProcess)[keyof typeof Embroide
 export class Step {
   id: string
   color: string
-  embroideryProcess: EmbroideryProcess = EmbroideryProcess.Satin2Points
+  embroideryProcess: EmbroideryProcess = EmbroideryProcess.SatinControlPoints
 
   satin?: StepSatin
   tatami?: StepTatami
@@ -44,13 +40,19 @@ export class Step {
 }
 
 export interface StepSatin {
-  startPointId: string | null
-  endPointId: string | null
+  startPoints: {
+    firstPointId: string
+    secondPointId: string
+  } | null
+  endPoints: {
+    firstPointId: string
+    secondPointId: string
+  } | null
 
-  guidePointPairList: GuidePointPair[]
+  controlPointPairList: ControlPointPair[]
 }
 
-export interface GuidePointPair {
+export interface ControlPointPair {
   positivePathPointId: string | null
   negativePathPointId: string | null
 }

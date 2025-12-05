@@ -19,6 +19,36 @@ export class Path extends Array<Point> {
     super(...points)
   }
 
+  analyzePath(startPoints: { firstPointId: string; secondPointId: string }, endPoints: { firstPointId: string; secondPointId: string }): {
+    positivePath: Path,
+    negativePath: Path
+  } {
+    const positivePath1 = this.getPositivePath(startPoints.firstPointId, endPoints.firstPointId)
+    const positivePath2 = this.getPositivePath(startPoints.firstPointId, endPoints.secondPointId)
+    const positivePath3 = this.getPositivePath(startPoints.secondPointId, endPoints.firstPointId)
+    const positivePath4 = this.getPositivePath(startPoints.secondPointId, endPoints.secondPointId)
+
+    const positivePathCandidates = [positivePath1, positivePath2, positivePath3, positivePath4]
+    positivePathCandidates.sort((a, b) => a.length - b.length)
+    const positivePath = positivePathCandidates[0]
+
+    let negativePath: Path
+    if (positivePath === positivePath1) {
+      negativePath = this.getNegativePath(startPoints.secondPointId, endPoints.secondPointId)
+    } else if (positivePath === positivePath2) {
+      negativePath = this.getNegativePath(startPoints.secondPointId, endPoints.firstPointId)
+    } else if (positivePath === positivePath3) {
+      negativePath = this.getNegativePath(startPoints.firstPointId, endPoints.secondPointId)
+    } else {
+      negativePath = this.getNegativePath(startPoints.firstPointId, endPoints.firstPointId)
+    }
+
+    return {
+      positivePath,
+      negativePath,
+    }
+  }
+
   getPositivePath(startId: string, endId: string): Path {
     const longPath = [...this, ...this]
     const positivePath: Point[] = []

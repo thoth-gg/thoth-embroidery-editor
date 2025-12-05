@@ -6,6 +6,7 @@ import EditorPanel from './components/left-panels/EditorModePanel.vue'
 import StitchEditor from './components/editor/StitchEditor.vue'
 import InspectorPanel from './components/right-panels/InspectorPanel.vue'
 import ProcessPanel from './components/right-panels/ProcessPanel.vue'
+import ConfigPanel from './components/right-panels/ConfigPanel.vue'
 </script>
 
 <template>
@@ -18,6 +19,7 @@ import ProcessPanel from './components/right-panels/ProcessPanel.vue'
     </div>
     <StitchEditor />
     <div class="panel-slot">
+      <ConfigPanel />
       <ColorPalletPanel />
       <InspectorPanel />
       <ProcessPanel />

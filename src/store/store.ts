@@ -32,7 +32,9 @@ export const useStore = defineStore('store', () => {
     return new Boundary(0, 0, width, height)
   })
 
-  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath }
+  const previewMargin = ref(5)
+
+  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath, previewMargin }
 })
 
 export const EditorMode: { [key: string]: EditorMode } = {

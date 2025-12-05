@@ -10,10 +10,16 @@ const store = useStore()
 
 <template>
   <PanelBase title="エディタモード">
-    <MenuButton @click="store.editorView = new StepPreview()" :active="(store.editorView instanceof StepPreview)">
+    <MenuButton
+      @click="store.editorView = new StepPreview()"
+      :active="store.editorView instanceof StepPreview"
+    >
       ステップモード
     </MenuButton>
-    <MenuButton @click="store.editorView = new ProcessPreview()" :active="(store.editorView instanceof ProcessPreview)">
+    <MenuButton
+      @click="store.editorView = new ProcessPreview()"
+      :active="store.editorView instanceof ProcessPreview"
+    >
       プロセスモード
     </MenuButton>
   </PanelBase>
