@@ -8,32 +8,44 @@ import InspectorPanel from './components/right-panels/InspectorPanel.vue'
 import ProcessPanel from './components/right-panels/ProcessPanel.vue'
 import ConfigPanel from './components/right-panels/ConfigPanel.vue'
 import StepProcessPanel from './components/left-panels/StepProcessPanel.vue'
+import StitchSeekBar from './components/common/StitchSeekBar.vue'
 </script>
 
 <template>
-  <div class="base-grid">
-    <div class="panel-slot">
-      <div class="logo">Thoth Embroidery Editor</div>
-      <ProjectPanel />
-      <EditorPanel />
-      <StepPanel />
-      <StepProcessPanel />
+  <div class="app-container">
+    <div class="base-grid">
+      <div class="panel-slot">
+        <div class="logo">Thoth Embroidery Editor</div>
+        <ProjectPanel />
+        <EditorPanel />
+        <StepPanel />
+        <StepProcessPanel />
+      </div>
+      <StitchEditor />
+      <div class="panel-slot">
+        <ConfigPanel />
+        <!-- <ColorPalletPanel /> -->
+        <InspectorPanel />
+        <ProcessPanel />
+      </div>
     </div>
-    <StitchEditor />
-    <div class="panel-slot">
-      <ConfigPanel />
-      <!-- <ColorPalletPanel /> -->
-      <InspectorPanel />
-      <ProcessPanel />
-    </div>
+    <StitchSeekBar />
   </div>
 </template>
 
 <style scoped>
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+}
+
 .base-grid {
   display: grid;
-  position: fixed;
   grid-template-columns: 316px 1fr 316px;
+  flex: 1;
+  overflow: hidden;
 }
 
 .logo {
@@ -47,7 +59,8 @@ import StepProcessPanel from './components/left-panels/StepProcessPanel.vue'
   padding: 8px;
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100%;
   gap: 8px 0px;
+  overflow-y: auto;
 }
 </style>

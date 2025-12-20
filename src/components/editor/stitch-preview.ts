@@ -14,8 +14,16 @@ export class StitchPreview extends EditorView {
     p.stroke("#000000")
     p.strokeWeight(0.3)
     p.beginShape()
+    let totalStitchCount = 0
     store.processList.forEach((process) => {
-      const stitchPath = new Path(...process.getStitchList().map(stitch => stitch.point))
+      let stitchList = process.getStitchList()
+      if (store.previewStitchLimit > 0) {
+        const remainingLimit = store.previewStitchLimit - totalStitchCount
+        if (remainingLimit <= 0) return
+        stitchList = stitchList.slice(0, remainingLimit)
+        totalStitchCount += stitchList.length
+      }
+      const stitchPath = new Path(...stitchList.map(stitch => stitch.point))
       rescalePathXY(stitchPath, p.width, p.height, store.embroideryBoundary!).forEach((point) =>
         p.vertex(point.x, point.y),
       )

@@ -19,12 +19,17 @@ onMounted(() => {
   if (ctx) {
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
 
-    const stitchPath = new Path(...props.process.getStitchList().map((stitch) => stitch.point))
+    let stitchList = props.process.getStitchList()
+    if (store.previewStitchLimit > 0) {
+      stitchList = stitchList.slice(0, store.previewStitchLimit)
+    }
+
+    const stitchPath = new Path(...stitchList.map((stitch) => stitch.point))
     const stepBoundary = Boundary.fromPath(stitchPath)
     const drawBoundary = stepBoundary.padding(store.previewMargin)
 
     const path = rescalePathXY(
-      new Path(...props.process.getStitchList().map((stitch) => stitch.point)),
+      new Path(...stitchList.map((stitch) => stitch.point)),
       canvas.value.width,
       canvas.value.height,
       drawBoundary,

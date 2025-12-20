@@ -20,6 +20,7 @@ export const useStore = defineStore('store', () => {
 
   const debugPath = ref<Path | null>(null)
   const processList = ref<Process[]>([])
+  const previewStitchLimit = ref(0)
 
   const selectedStep = computed(() => {
     return (
@@ -37,7 +38,7 @@ export const useStore = defineStore('store', () => {
 
   const previewMargin = ref(5)
 
-  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath, previewMargin, processList }
+  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath, previewMargin, processList, previewStitchLimit }
 })
 
 export const EditorMode: { [key: string]: EditorMode } = {

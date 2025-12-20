@@ -42,8 +42,13 @@ onMounted(() => {
     ctx.closePath()
     ctx.fill()
 
+    let stitchList = props.process.getStitchList()
+    if (store.previewStitchLimit > 0) {
+      stitchList = stitchList.slice(0, store.previewStitchLimit)
+    }
+
     const path = rescalePathXY(
-      new Path(...props.process.getStitchList().map((stitch) => stitch.point)),
+      new Path(...stitchList.map((stitch) => stitch.point)),
       canvas.value.width,
       canvas.value.height,
       drawBoundary,
