@@ -5,7 +5,7 @@ import { useStore } from '@/store/store'
 import MenuButton from '../common/MenuButton.vue'
 import { parseSvg } from '@/utils/svg'
 import { Embroidery } from '@/models/embroidery'
-import { Step } from '@/models/step'
+import { SatinStep, Step } from '@/models/step'
 
 const store = useStore()
 const status = ref('未読込')
@@ -30,7 +30,9 @@ async function onFileChange(e: any) {
       store.embroidery = new Embroidery(
         parsedSvg.width,
         parsedSvg.height,
-        parsedSvg.objectPathList.map((objectPath) => new Step(objectPath.color, objectPath.path)),
+        parsedSvg.objectPathList.map(
+          (objectPath) => new SatinStep(objectPath.color, objectPath.path),
+        ),
       )
 
       status.value = '読み込み完了'

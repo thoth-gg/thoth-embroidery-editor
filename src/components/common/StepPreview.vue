@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Boundary } from '@/models/point'
+import { Boundary, Path } from '@/models/point'
 import type { Step } from '@/models/step'
 import { useStore } from '@/store/store'
 import { rescalePathXY } from '@/utils/transform'
@@ -19,11 +19,16 @@ onMounted(() => {
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height)
     ctx.fillStyle = props.step.color
 
+    const stepBoundary = Boundary.fromPath(
+      new Path(...store.embroidery!.stepList.flatMap((s) => s.sourcePath)),
+    )
+    const drawBoundary = stepBoundary.padding(store.previewMargin)
+
     const normalizedPoints = rescalePathXY(
       props.step.sourcePath,
       canvas.value.width,
       canvas.value.height,
-      new Boundary(0, 0, store.embroidery!.width, store.embroidery!.height),
+      drawBoundary,
     )
     ctx.beginPath()
     normalizedPoints.forEach((point, index) => {

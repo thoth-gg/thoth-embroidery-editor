@@ -1,22 +1,24 @@
-import p5 from "p5";
-import { EditorView } from "./p5interface";
-import { useStore } from "@/store/store";
-import { rescalePathXY } from "@/utils/transform";
-import { Boundary, Path, Point } from "@/models/point";
-import { StepPreview } from "./step-preview";
-import { ProcessPreview } from "./process-preview";
+import p5 from 'p5'
+import { EditorView } from './p5interface'
+import { useStore } from '@/store/store'
+import { rescalePathXY } from '@/utils/transform'
+import { Boundary, Path, Point } from '@/models/point'
+import { StepPreview } from './step-preview'
+import { ProcessPreview } from './process-preview'
+import { SatinStep } from '@/models/step'
 
 const stepPreview = new StepPreview()
 
 export enum ControlPointsType {
-  StartPoints,
-  EndPoints,
+  StartAndEndPoints,
   ControlPoints,
 }
 
 export class ProcessSetControlPoints extends EditorView {
-  controlPointsType: ControlPointsType;
-  firstPointId: string | null = null;
+  controlPointsType: ControlPointsType
+  firstPointId: string | null = null
+  secondPointId: string | null = null
+  thirdPointId: string | null = null
   store
   step
 
@@ -38,7 +40,7 @@ export class ProcessSetControlPoints extends EditorView {
 
   private getNearbyPointOnPath(p: p5, x: number, y: number, path: Path) {
     return path.reduce(
-      (m, c) => p.dist(c.x, c.y, x, y) < p.dist(m.x, m.y, x, y) ? c : m,
+      (m, c) => (p.dist(c.x, c.y, x, y) < p.dist(m.x, m.y, x, y) ? c : m),
       new Point(Number.MAX_SAFE_INTEGER, Number.MAX_SAFE_INTEGER),
     )
   }
@@ -73,10 +75,11 @@ export class ProcessSetControlPoints extends EditorView {
     p.stroke(0)
     p.strokeWeight(5)
 
-    const point = sourcePath.find(p => p.id == this.firstPointId)
-    if (point) {
-      p.point(point.x, point.y)
-    }
+    sourcePath
+      .filter((point) =>
+        [this.firstPointId, this.secondPointId, this.thirdPointId].includes(point.id),
+      )
+      .forEach((point) => p.point(point.x, point.y))
 
     if (this.isMouseInBounds(mouseX, mouseY, p)) {
       const nearbyPoint = this.getNearbyPointOnPath(p, mouseX, mouseY, sourcePath)
@@ -88,38 +91,72 @@ export class ProcessSetControlPoints extends EditorView {
     if (!this.isMouseInBounds(p.mouseX, p.mouseY, p)) {
       return
     }
-    if (!this.step) return
+    // SatinStepのみ対応
+    if (!(this.step instanceof SatinStep)) return
     const stepBoundary = Boundary.fromPath(this.step.sourcePath)
     const drawBoundary = stepBoundary.padding(this.store.previewMargin)
     const sourcePath = rescalePathXY(this.step.sourcePath, p.width, p.height, drawBoundary)
     const nearbyPoint = this.getNearbyPointOnPath(p, p.mouseX, p.mouseY, sourcePath)
-    if (!this.step.satin) {
-      this.step.satin = { startPoints: null, endPoints: null, controlPointPairList: [] }
-    }
     if (this.firstPointId === null) {
       this.firstPointId = nearbyPoint.id
-    } else {
-      const secondPointId = nearbyPoint.id
-      if (this.controlPointsType === ControlPointsType.StartPoints) {
-        this.step.satin!.startPoints = { firstPointId: this.firstPointId, secondPointId }
-      } else if (this.controlPointsType === ControlPointsType.EndPoints) {
-        this.step.satin!.endPoints = { firstPointId: this.firstPointId, secondPointId }
-      } else if (this.controlPointsType === ControlPointsType.ControlPoints) {
+      return
+    }
+
+    switch (this.controlPointsType) {
+      case ControlPointsType.StartAndEndPoints: {
+        if (this.secondPointId === null) {
+          this.secondPointId = nearbyPoint.id
+          return
+        }
+        if (this.thirdPointId === null) {
+          this.thirdPointId = nearbyPoint.id
+          return
+        }
+        const startPoints = { firstPointId: this.firstPointId, secondPointId: this.secondPointId }
+        const endPoints = { firstPointId: this.thirdPointId, secondPointId: nearbyPoint.id }
         const { positivePath, negativePath } = this.step.sourcePath.analyzePath(
-          this.step.satin.startPoints!,
-          this.step.satin.endPoints!,
+          startPoints,
+          endPoints,
         )
-        if (positivePath.find(p => p.id === this.firstPointId) !== undefined &&
-          negativePath.find(p => p.id === secondPointId) !== undefined) {
-          this.step.satin!.controlPointPairList.push({ positivePathPointId: this.firstPointId, negativePathPointId: secondPointId })
-        } else if (negativePath.find(p => p.id === this.firstPointId) !== undefined &&
-          positivePath.find(p => p.id === secondPointId) !== undefined) {
-          this.step.satin!.controlPointPairList.push({ positivePathPointId: secondPointId, negativePathPointId: this.firstPointId })
+        this.step.startAndEndPoints = {
+          positivePathStartPointId: positivePath[0].id == this.firstPointId ? this.firstPointId : this.secondPointId,
+          negativePathStartPointId: positivePath[0].id == this.firstPointId ? this.secondPointId : this.firstPointId,
+          positivePathEndPointId: positivePath[0].id == this.thirdPointId ? this.thirdPointId : nearbyPoint.id,
+          negativePathEndPointId: positivePath[0].id == this.thirdPointId ? nearbyPoint.id : this.thirdPointId,
+        }
+        this.step.updateProcessList()
+        this.store.editorView = new ProcessPreview()
+        return
+      }
+      case ControlPointsType.ControlPoints: {
+
+        const positivePath = this.step.sourcePath.getPositivePath(
+          this.step.startAndEndPoints!.positivePathStartPointId,
+          this.step.startAndEndPoints!.positivePathEndPointId,
+        )
+        const negativePath = this.step.sourcePath.getNegativePath(
+          this.step.startAndEndPoints!.negativePathStartPointId,
+          this.step.startAndEndPoints!.negativePathEndPointId,
+        )
+        if (
+          positivePath.find((p) => p.id === this.firstPointId) !== undefined &&
+          negativePath.find((p) => p.id === nearbyPoint.id) !== undefined
+        ) {
+          this.step.positiveControlPointIdList.push(this.firstPointId)
+          this.step.negativeControlPointIdList.push(nearbyPoint.id)
+        } else if (
+          negativePath.find((p) => p.id === this.firstPointId) !== undefined &&
+          positivePath.find((p) => p.id === nearbyPoint.id) !== undefined
+        ) {
+          this.step.positiveControlPointIdList.push(nearbyPoint.id)
+          this.step.negativeControlPointIdList.push(this.firstPointId)
         } else {
           alert('制御点は、正負のパスからそれぞれ1点ずつ選択してください。')
         }
+        this.step.updateProcessList()
+        this.store.editorView = new ProcessPreview()
+        return
       }
-      this.store.editorView = new ProcessPreview()
     }
   }
   doubleClicked(p: p5): void { }

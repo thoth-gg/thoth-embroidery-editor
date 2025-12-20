@@ -2,6 +2,7 @@ import p5 from "p5";
 import { EditorView } from "./p5interface";
 import { useStore } from "@/store/store";
 import { rescalePathXY } from "@/utils/transform";
+import { Boundary, Path, Point } from "@/models/point";
 
 export class StepPreview extends EditorView {
   draw(p: p5): void {

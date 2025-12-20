@@ -1,7 +1,8 @@
 import type { EditorView } from '@/components/editor/p5interface'
-import { StepPreview } from '@/components/editor/step-preview'
+import { ProcessPreview } from '@/components/editor/process-preview'
 import type { Embroidery } from '@/models/embroidery'
-import { Boundary, type Path } from '@/models/point'
+import { Boundary, Path } from '@/models/point'
+import type { Process } from '@/models/process'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 
@@ -12,11 +13,13 @@ export const useStore = defineStore('store', () => {
   const editor = ref<Editor>({
     mode: EditorMode.Step,
     selectedStepId: null,
+    selectedStepProcessId: null,
   })
 
-  const editorView = ref<EditorView>(new StepPreview())
+  const editorView = ref<EditorView>(new ProcessPreview())
 
   const debugPath = ref<Path | null>(null)
+  const processList = ref<Process[]>([])
 
   const selectedStep = computed(() => {
     return (
@@ -28,13 +31,13 @@ export const useStore = defineStore('store', () => {
 
   const embroideryBoundary = computed(() => {
     if (!embroidery.value) return null
-    const { width, height } = embroidery.value
-    return new Boundary(0, 0, width, height)
+    const stepBoundary = Boundary.fromPath(new Path(...embroidery.value.stepList.flatMap((s) => s.sourcePath)))
+    return stepBoundary.padding(previewMargin.value)
   })
 
   const previewMargin = ref(5)
 
-  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath, previewMargin }
+  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath, previewMargin, processList }
 })
 
 export const EditorMode: { [key: string]: EditorMode } = {
@@ -83,4 +86,5 @@ export interface EditorMode {
 export interface Editor {
   mode: EditorMode
   selectedStepId: string | null
+  selectedStepProcessId: string | null
 }

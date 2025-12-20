@@ -3,9 +3,7 @@ import { ref, watch } from 'vue'
 import PanelBase from '../common/PanelBase.vue'
 import { EditorMode, useStore } from '@/store/store'
 import MenuButton from '../common/MenuButton.vue'
-import { EmbroideryProcess } from '@/models/step'
-import { Path } from '@/models/point'
-import { calcDistance, dividePath } from '@/utils/curve'
+import { EmbroideryProcess, SatinStep } from '@/models/step'
 import type { EditorView } from '../editor/p5interface'
 import { ProcessPreview } from '../editor/process-preview'
 import { ControlPointsType, ProcessSetControlPoints } from '../editor/process-set-control-points'
@@ -59,29 +57,20 @@ function setEditorView(editorView: EditorView) {
         </option></select
       ><br />
       <div
-        v-if="store.selectedStep?.embroideryProcess.key == EmbroideryProcess.SatinControlPoints.key"
+        v-if="
+          store.selectedStep?.embroideryProcess.key == EmbroideryProcess.SatinControlPoints.key &&
+          store.selectedStep instanceof SatinStep
+        "
       >
         <MenuButton
-          @click="setEditorView(new ProcessSetControlPoints(ControlPointsType.StartPoints))"
+          @click="setEditorView(new ProcessSetControlPoints(ControlPointsType.StartAndEndPoints))"
           :disabled="!store.selectedStep"
-          >始点指定 </MenuButton
+          >始終点指定 </MenuButton
         >:
         {{
           store.editorView instanceof ProcessSetControlPoints
             ? '指定中'
-            : store.selectedStep?.satin?.startPoints
-              ? '指定済み'
-              : '未指定'
-        }}<br />
-        <MenuButton
-          @click="setEditorView(new ProcessSetControlPoints(ControlPointsType.EndPoints))"
-          :disabled="!store.selectedStep"
-          >終点指定 </MenuButton
-        >:
-        {{
-          store.editorView instanceof ProcessSetControlPoints
-            ? '指定中'
-            : store.selectedStep?.satin?.endPoints
+            : store.selectedStep.startAndEndPoints
               ? '指定済み'
               : '未指定'
         }}<br />
@@ -92,7 +81,7 @@ function setEditorView(editorView: EditorView) {
           ガイドポイント追加</MenuButton
         >:
         {{
-          `${store.selectedStep?.satin?.controlPointPairList.length || 0}個指定済` +
+          `${store.selectedStep.controlPointPairList.length || 0}個指定済` +
           (store.editor.mode.is(EditorMode.ProcessSetGuidePointPair) ? `: 指定中` : '')
         }}
       </div>

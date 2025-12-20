@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { useStore } from '@/store/store'
 import p5 from 'p5'
-import { onMounted, watch } from 'vue'
+import { onMounted } from 'vue'
 
 const store = useStore()
 
 const sketch = (p: p5) => {
   p.setup = () => {
     p.createCanvas(1080, 800)
+    p.strokeJoin(p.ROUND)
   }
 
   p.draw = () => {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useStore } from '@/store/store'
 import PanelBase from '../common/PanelBase.vue'
-import StrokePreview from '../common/StrokePreview.vue'
+import StepPreview from '../common/StepPreview.vue'
 import type { Step } from '@/models/step'
 
 const store = useStore()
@@ -22,9 +22,9 @@ function click(step: Step) {
       v-for="step in store.stepList"
       v-bind:key="step.id"
       @click="click(step)"
-      :class="{ selected: store.editor.selectedStepId === step.id }"
+      :class="{ step: true, selected: store.editor.selectedStepId === step.id }"
     >
-      <StrokePreview :step="step" />
+      <StepPreview :step="step" />
       <div class="step-info">
         <p>色: {{ step.color }}</p>
         <p>処理方法: {{ step.embroideryProcess.name }}</p>
@@ -35,6 +35,7 @@ function click(step: Step) {
 
 <style scoped>
 .step-panel {
+  flex-basis: 50%;
   overflow-y: scroll;
 }
 

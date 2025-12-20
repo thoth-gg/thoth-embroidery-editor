@@ -30,6 +30,7 @@ const props = defineProps({
   padding: 0px 4px;
   position: sticky;
   top: 0;
+  height: 20px;
 }
 
 .content {
