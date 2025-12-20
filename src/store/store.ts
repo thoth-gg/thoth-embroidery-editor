@@ -14,6 +14,7 @@ export const useStore = defineStore('store', () => {
     mode: EditorMode.Step,
     selectedStepId: null,
     selectedStepProcessId: null,
+    selectedProcessId: null,
   })
 
   const editorView = ref<EditorView>(new ProcessPreview())
@@ -88,4 +89,5 @@ export interface Editor {
   mode: EditorMode
   selectedStepId: string | null
   selectedStepProcessId: string | null
+  selectedProcessId: string | null
 }

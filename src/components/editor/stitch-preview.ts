@@ -2,7 +2,7 @@ import p5 from "p5";
 import { EditorView } from "./p5interface";
 import { useStore } from "@/store/store";
 import { rescalePathXY } from "@/utils/transform";
-import { Path } from "@/models/point";
+import { Path, Point } from "@/models/point";
 
 export class StitchPreview extends EditorView {
   draw(p: p5): void {
@@ -11,22 +11,28 @@ export class StitchPreview extends EditorView {
     if (!embroidery) return
 
     p.noFill()
-    p.stroke("#000000")
     p.strokeWeight(0.3)
     p.beginShape()
     let totalStitchCount = 0
+    let lastPoint: Point | null = null
     store.processList.forEach((process) => {
-      let stitchList = process.getStitchList()
-      if (store.previewStitchLimit > 0) {
-        const remainingLimit = store.previewStitchLimit - totalStitchCount
-        if (remainingLimit <= 0) return
-        stitchList = stitchList.slice(0, remainingLimit)
-        totalStitchCount += stitchList.length
+      const isSelected = store.editor.selectedProcessId === process.id
+      p.endShape()
+      p.stroke(isSelected ? "#ff0000" : "#000000")
+      p.beginShape()
+      if (lastPoint) {
+        p.vertex(lastPoint.x, lastPoint.y)
       }
-      const stitchPath = new Path(...stitchList.map(stitch => stitch.point))
-      rescalePathXY(stitchPath, p.width, p.height, store.embroideryBoundary!).forEach((point) =>
-        p.vertex(point.x, point.y),
-      )
+
+      const path = rescalePathXY(new Path(...process.getStitchList().map(s => s.point)), p.width, p.height, store.embroideryBoundary!);
+      path.forEach((point) => {
+        if (totalStitchCount >= store.previewStitchLimit) {
+          return
+        }
+        p.vertex(point.x, point.y)
+        lastPoint = point
+        totalStitchCount++
+      })
     })
     p.endShape()
   }

@@ -7,12 +7,23 @@ import type { Process } from '@/models/process'
 
 const store = useStore()
 
+function click(process: Process) {
+  if (store.editor.selectedProcessId === process.id) {
+    store.editor.selectedProcessId = null
+    return
+  }
+  store.editor.selectedProcessId = process.id
+}
+
 function deleteProcess(process: Process) {
   const index = store.processList.findIndex((p) => p.id === process.id)
   if (index !== -1) {
     store.processList.splice(index, 1)
     if (store.editor.selectedStepProcessId === process.id) {
       store.editor.selectedStepProcessId = null
+    }
+    if (store.editor.selectedProcessId === process.id) {
+      store.editor.selectedProcessId = null
     }
   }
 }
@@ -38,15 +49,23 @@ function moveDown(process: Process) {
 
 <template>
   <PanelBase title="プロセス">
-    <div v-for="(process, index) in store.processList" v-bind:key="process.id" class="process">
+    <div
+      v-for="(process, index) in store.processList"
+      v-bind:key="process.id"
+      class="process"
+      @click="click(process)"
+      :class="{ process: true, selected: store.editor.selectedProcessId === process.id }"
+    >
       <ProcessPreview :process="process" />
       <div class="process-info">
         <div class="process-controls">
-          <MenuButton @click="moveUp(process)" :disabled="index === 0">↑</MenuButton>
-          <MenuButton @click="moveDown(process)" :disabled="index === store.processList.length - 1"
+          <MenuButton @click.stop="moveUp(process)" :disabled="index === 0">↑</MenuButton>
+          <MenuButton
+            @click.stop="moveDown(process)"
+            :disabled="index === store.processList.length - 1"
             >↓</MenuButton
           >
-          <MenuButton @click="deleteProcess(process)">削除</MenuButton>
+          <MenuButton @click.stop="deleteProcess(process)">削除</MenuButton>
         </div>
       </div>
     </div>
@@ -57,6 +76,10 @@ function moveDown(process: Process) {
 .process {
   border: 1px solid #ccc;
   display: flex;
+}
+
+.process.selected {
+  background-color: #fff6ba;
 }
 
 .process-info {
