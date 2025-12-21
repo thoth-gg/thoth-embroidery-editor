@@ -16,6 +16,8 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "buffer": "^6.0.3",
+    "jsembroidery": "github:leguass7/jsembroidery",
     "p5": "^2.0.4",
     "pinia": "^3.0.3",
     "svg-path-parser": "^1.1.0",
