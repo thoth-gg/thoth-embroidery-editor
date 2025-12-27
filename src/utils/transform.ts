@@ -37,3 +37,25 @@ export function rescalePathXY(path: Path, dstW: number, dstH: number, boundary?:
 
   return new Path(...path.map(({ x, y, id }) => new Point(x * scale + offsetX, y * scale + offsetY, id)))
 }
+
+export function inverseRescalePathXY(path: Path, dstW: number, dstH: number, boundary: Boundary): Path {
+  if (path.length === 0) return new Path()
+
+  const srcW = boundary.maxX - boundary.minX
+  const srcH = boundary.maxY - boundary.minY
+
+  // 幅または高さが 0 の場合は元の座標を返す（変換されていないため）
+  if (srcW === 0 || srcH === 0) {
+    return new Path(...path.map((p) => new Point(p.x, p.y, p.id)))
+  }
+
+  // 一様スケール係数（rescalePathXYと同じ計算）
+  const scale = Math.min(dstW / srcW, dstH / srcH)
+
+  // 中央寄せオフセット（rescalePathXYと同じ計算）
+  const offsetX = (dstW - srcW * scale) / 2 - boundary.minX * scale
+  const offsetY = (dstH - srcH * scale) / 2 - boundary.minY * scale
+
+  // 逆変換: x = (x' - offsetX) / scale, y = (y' - offsetY) / scale
+  return new Path(...path.map(({ x, y, id }) => new Point((x - offsetX) / scale, (y - offsetY) / scale, id)))
+}

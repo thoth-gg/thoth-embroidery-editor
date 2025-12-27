@@ -1,15 +1,13 @@
 import { calcDistance, dividePath } from '@/utils/curve'
-import type { Path, Point } from './point'
+import { Point, type Path } from './point'
 import { Stitch } from './stitch'
-
-let processLastId = 0
 
 export abstract class Process {
   id: string
   stitchList: Stitch[]
 
   constructor(id?: string) {
-    this.id = id || `process-${processLastId++}`
+    this.id = id || crypto.randomUUID()
     this.stitchList = []
   }
 
