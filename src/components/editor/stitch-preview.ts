@@ -3,12 +3,21 @@ import { EditorView } from "./p5interface";
 import { useStore } from "@/store/store";
 import { rescalePathXY } from "@/utils/transform";
 import { Path, Point } from "@/models/point";
+import { ManualProcessEdit } from "./manual-process-edit";
+import { ManualProcess } from "@/models/process";
+
+const manualProcessEdit = new ManualProcessEdit()
 
 export class StitchPreview extends EditorView {
   draw(p: p5): void {
     const store = useStore()
     const embroidery = store.embroidery
     if (!embroidery) return
+
+    if (store.selectedProcess instanceof ManualProcess) {
+      manualProcessEdit.draw(p)
+      return
+    }
 
     p.noFill()
     p.strokeWeight(0.3)
@@ -37,6 +46,18 @@ export class StitchPreview extends EditorView {
     p.endShape()
   }
 
-  mouseClicked(p: p5): void { }
-  doubleClicked(p: p5): void { }
+  mouseClicked(p: p5): void {
+    const store = useStore()
+    if (store.selectedProcess instanceof ManualProcess) {
+      manualProcessEdit.mouseClicked(p)
+      return
+    }
+  }
+  doubleClicked(p: p5): void {
+    const store = useStore()
+    if (store.selectedProcess instanceof ManualProcess) {
+      manualProcessEdit.doubleClicked(p)
+      return
+    }
+  }
 }

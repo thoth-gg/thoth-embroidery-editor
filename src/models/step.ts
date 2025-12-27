@@ -47,6 +47,13 @@ export class SatinStep extends Step {
     negativePathEndPointId: string
   } | null = null
 
+  splitPoints: {
+    positivePointId: string
+    negativePointId: string
+    isSelectedA: boolean
+    isSelectedB: boolean
+  } | null = null
+
   // controlPointPairList: ControlPointPair[] = []
   positiveControlPointIdList: string[] = []
   negativeControlPointIdList: string[] = []

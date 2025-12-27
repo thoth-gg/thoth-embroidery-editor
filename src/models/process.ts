@@ -1,5 +1,5 @@
 import { calcDistance, dividePath } from '@/utils/curve'
-import type { Path } from './point'
+import type { Path, Point } from './point'
 import { Stitch } from './stitch'
 
 let processLastId = 0
@@ -38,5 +38,18 @@ export class SatinProcess extends Process {
     }
 
     return result;
+  }
+}
+
+export class ManualProcess extends Process {
+  pointList: Point[] = []
+
+  constructor(startPoint: Point, endPoint: Point) {
+    super()
+    this.pointList = [startPoint, endPoint]
+  }
+
+  getStitchList(): Stitch[] {
+    return this.pointList.map(p => new Stitch(p));
   }
 }

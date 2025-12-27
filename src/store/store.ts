@@ -29,6 +29,12 @@ export const useStore = defineStore('store', () => {
     )
   })
 
+  const selectedProcess = computed(() => {
+    return (
+      processList.value.find((process) => process.id === editor.value.selectedProcessId) || null
+    )
+  })
+
   const stepList = computed(() => embroidery.value?.stepList || [])
 
   const embroideryBoundary = computed(() => {
@@ -39,7 +45,7 @@ export const useStore = defineStore('store', () => {
 
   const previewMargin = ref(5)
 
-  return { embroidery, editor, editorView, selectedStep, stepList, embroideryBoundary, debugPath, previewMargin, processList, previewStitchLimit }
+  return { embroidery, editor, editorView, selectedStep, selectedProcess, stepList, embroideryBoundary, debugPath, previewMargin, processList, previewStitchLimit }
 })
 
 export const EditorMode: { [key: string]: EditorMode } = {

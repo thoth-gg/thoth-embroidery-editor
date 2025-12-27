@@ -5,7 +5,7 @@ import { useStore } from '@/store/store'
 import MenuButton from '../common/MenuButton.vue'
 import { parseSvg } from '@/utils/svg'
 import { Embroidery } from '@/models/embroidery'
-import { SatinStep, Step } from '@/models/step'
+import { SatinStep } from '@/models/step'
 import { buildDST } from '@/utils/dst_util'
 import { Point, Path, Boundary } from '@/models/point'
 import { rescalePathXY } from '@/utils/transform'
@@ -49,14 +49,11 @@ async function onFileChange(e: any) {
 function onExport() {
   if (!store.embroidery) return
 
-  // Collect all points from all stitches in all steps and processes
   const originalPoints: Point[] = []
-  for (const step of store.embroidery.stepList) {
-    for (const process of step.processList) {
-      const stitches = process.getStitchList()
-      for (const stitch of stitches) {
-        originalPoints.push(stitch.point)
-      }
+  for (const process of store.processList) {
+    const stitches = process.getStitchList()
+    for (const stitch of stitches) {
+      originalPoints.push(stitch.point)
     }
   }
 

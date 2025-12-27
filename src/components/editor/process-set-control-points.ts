@@ -3,15 +3,13 @@ import { EditorView } from './p5interface'
 import { useStore } from '@/store/store'
 import { rescalePathXY } from '@/utils/transform'
 import { Boundary, Path, Point } from '@/models/point'
-import { StepPreview } from './step-preview'
 import { ProcessPreview } from './process-preview'
 import { SatinStep } from '@/models/step'
-
-const stepPreview = new StepPreview()
 
 export enum ControlPointsType {
   StartAndEndPoints,
   ControlPoints,
+  SplitPoints,
 }
 
 export class ProcessSetControlPoints extends EditorView {
@@ -51,6 +49,34 @@ export class ProcessSetControlPoints extends EditorView {
     p.endShape()
   }
 
+  getFilteredPath(sourcePath: Path): Path {
+    if (this.controlPointsType === ControlPointsType.SplitPoints) return sourcePath
+    if (!(this.store.selectedStep instanceof SatinStep)) return sourcePath
+    if (this.store.selectedStep.splitPoints === null) return sourcePath
+    const positivePath = sourcePath.getPositivePath(
+      this.store.selectedStep.splitPoints.positivePointId,
+      this.store.selectedStep.splitPoints.negativePointId,
+    )
+    const negativePath = sourcePath.getNegativePath(
+      this.store.selectedStep.splitPoints.positivePointId,
+      this.store.selectedStep.splitPoints.negativePointId,
+    )
+
+    const filteredPath = sourcePath.filter((point) => {
+      if (this.controlPointsType === ControlPointsType.SplitPoints) return true
+      if (!(this.store.selectedStep instanceof SatinStep)) return true
+      let result = false
+      if (this.store.selectedStep.splitPoints?.isSelectedA) {
+        result = result || positivePath.includes(point)
+      }
+      if (this.store.selectedStep.splitPoints?.isSelectedB) {
+        result = result || negativePath.includes(point)
+      }
+      return result
+    })
+    return new Path(...filteredPath)
+  }
+
   draw(p: p5): void {
     if (!this.step) return
     const stepBoundary = Boundary.fromPath(this.step.sourcePath)
@@ -68,21 +94,23 @@ export class ProcessSetControlPoints extends EditorView {
       this.drawPath(p, rescalePathXY(s.sourcePath, p.width, p.height, drawBoundary))
     })
 
+    const filteredPath = this.getFilteredPath(sourcePath)
+
     p.stroke(0)
     p.strokeWeight(1)
-    sourcePath.forEach((point) => p.point(point.x, point.y))
+    filteredPath.forEach((point) => p.point(point.x, point.y))
 
     p.stroke(0)
     p.strokeWeight(5)
 
-    sourcePath
+    filteredPath
       .filter((point) =>
         [this.firstPointId, this.secondPointId, this.thirdPointId].includes(point.id),
       )
       .forEach((point) => p.point(point.x, point.y))
 
     if (this.isMouseInBounds(mouseX, mouseY, p)) {
-      const nearbyPoint = this.getNearbyPointOnPath(p, mouseX, mouseY, sourcePath)
+      const nearbyPoint = this.getNearbyPointOnPath(p, mouseX, mouseY, new Path(...filteredPath))
       p.point(nearbyPoint.x, nearbyPoint.y)
     }
   }
@@ -96,7 +124,8 @@ export class ProcessSetControlPoints extends EditorView {
     const stepBoundary = Boundary.fromPath(this.step.sourcePath)
     const drawBoundary = stepBoundary.padding(this.store.previewMargin)
     const sourcePath = rescalePathXY(this.step.sourcePath, p.width, p.height, drawBoundary)
-    const nearbyPoint = this.getNearbyPointOnPath(p, p.mouseX, p.mouseY, sourcePath)
+    const filteredPath = this.getFilteredPath(sourcePath)
+    const nearbyPoint = this.getNearbyPointOnPath(p, p.mouseX, p.mouseY, filteredPath)
     if (this.firstPointId === null) {
       this.firstPointId = nearbyPoint.id
       return
@@ -154,6 +183,16 @@ export class ProcessSetControlPoints extends EditorView {
           alert('制御点は、正負のパスからそれぞれ1点ずつ選択してください。')
         }
         this.step.updateProcessList()
+        this.store.editorView = new ProcessPreview()
+        return
+      }
+      case ControlPointsType.SplitPoints: {
+        this.step.splitPoints = {
+          positivePointId: this.firstPointId,
+          negativePointId: nearbyPoint.id,
+          isSelectedA: true,
+          isSelectedB: true,
+        }
         this.store.editorView = new ProcessPreview()
         return
       }

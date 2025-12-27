@@ -4,6 +4,8 @@ import { useStore } from '@/store/store'
 import ProcessPreview from '../common/ProcessPreview.vue'
 import MenuButton from '../common/MenuButton.vue'
 import type { Process } from '@/models/process'
+import { ManualProcess, SatinProcess } from '@/models/process'
+import { Path } from '@/models/point'
 
 const store = useStore()
 
@@ -45,6 +47,22 @@ function moveDown(process: Process) {
     store.processList[index + 1] = temp
   }
 }
+
+function addManualProcess(process: Process) {
+  const index = store.processList.findIndex((p) => p.id === process.id)
+  if (index === -1) {
+    return
+  }
+  const nextProcess = store.processList[index + 1]
+  store.processList.splice(
+    index + 1,
+    0,
+    new ManualProcess(
+      process.getStitchList()[process.getStitchList().length - 1].point,
+      nextProcess.getStitchList()[0].point,
+    ),
+  )
+}
 </script>
 
 <template>
@@ -67,6 +85,13 @@ function moveDown(process: Process) {
           >
           <MenuButton @click.stop="deleteProcess(process)">削除</MenuButton>
         </div>
+        <div class="process-controls">
+          <MenuButton
+            @click.stop="addManualProcess(process)"
+            :disabled="index === store.processList.length - 1"
+            >↓手動Processを追加</MenuButton
+          >
+        </div>
       </div>
     </div>
   </PanelBase>
@@ -87,6 +112,9 @@ function moveDown(process: Process) {
   flex: 1;
   display: flex;
   align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
 }
 
 .process-controls {

@@ -199,6 +199,10 @@ export function buildDST(absolutePoints: Point[]): Buffer {
         throw new Error("absolutePoints must not be empty");
     }
 
+    absolutePoints = absolutePoints.map(p => {
+        return new Point(p.x / 1.5, p.y / 1.5, p.id);
+    })
+
     let currentX = 0;
     let currentY = 0;
 
@@ -274,14 +278,3 @@ export function buildDST(absolutePoints: Point[]): Buffer {
     const body = Buffer.concat(records.map((r) => Buffer.from(r)));
     return Buffer.concat([header, body]);
 }
-
-// Example usage (commented out):
-// const points = [
-//     new Point(0, 0),
-//     new Point(100, 0),
-//     new Point(100, 100),
-//     new Point(0, 100),
-//     new Point(0, 0),
-// ];
-// const out = buildDST(points);
-// console.log(`wrote pattern.dst (${out.length} bytes)`);
